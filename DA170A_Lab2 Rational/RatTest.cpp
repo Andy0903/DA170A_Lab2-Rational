@@ -10,6 +10,8 @@
 
 #include <limits>
 
+#define VG
+
 #ifdef VG
 //Kollar att int räknar med 64 bitar internt
 bool TestAccuracy() {
@@ -55,8 +57,8 @@ void TestFörGodkänt() {
     assert(rs1 == rs1);
     assert(rs2 == 2);
     assert(rs1 == rll1);
-    assert(rs1 == Rational<short>(rs1.nom, rs1.denom));
-    assert(rs1 == Rational<short>(-rs1.nom, -rs1.denom));
+    assert(rs1 == Rational<short>(rs1.p, rs1.q));
+    assert(rs1 == Rational<short>(-rs1.p, -rs1.q));
 
     //Tilldelas (=) från ”Tal” dvs. rtal=tal;
     rs3 = Rint(13, 3);
@@ -105,3 +107,9 @@ void TestFörVälGodkänt() {
 
 #endif
 
+
+int main()
+{
+	TestFörGodkänt();
+	TestFörVälGodkänt();
+}
