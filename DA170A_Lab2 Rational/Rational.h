@@ -3,28 +3,67 @@
 #include <iostream>
 #include "GCD.h"
 
-template <typename T>
-struct TypeSize
+template<typename A>
+struct LargerType;
+
+template <>
+struct LargerType<int>
 {
-	static const int value = -1; //sizeof(T);
+	typedef long long type;
 };
+
+template <>
+struct LargerType<short>
+{
+	typedef int type;
+};
+
+template <>
+struct LargerType<long long>
+{
+	typedef long long type;
+};
+
+template <typename T>
+struct TypeSize;
 
 template <>
 struct TypeSize<int>
 {
-	static const int value = 4;
+	static const int byte = 4;
 };
 
 template <>
 struct TypeSize<short>
 {
-	static const int value = 2;
+	static const int byte = 2;
 };
 
 template <>
 struct TypeSize<long long>
 {
-	static const int value = 8;
+	static const int byte = 8;
+};
+
+template <bool C, typename A, typename B>
+struct Conditional;
+
+template<typename A, typename B>
+struct Conditional<true, A, B>
+{
+	typedef A type;
+};
+
+template<typename A, typename B>
+struct Conditional<false, A, B>
+{
+	typedef B type;
+};
+
+template<typename A, typename B>
+struct LargestType
+{
+	typedef typename Conditional<(TypeSize<A>::byte > TypeSize<B>::byte), A, B>::type type;
 };
 
 template<typename Tint>
@@ -38,7 +77,7 @@ public:
 	{
 	}
 
-	Rational(Tint p) : Rational(p, 1)
+	Rational(const Tint& p) : Rational(p, 1)
 	{
 	}
 
@@ -119,12 +158,21 @@ public:
 };
 
 template <typename L, typename R>
-Rational<L> operator+(const Rational<L>& lhs, const Rational<R>& rhs)
+Rational<typename LargestType<L,R>::type> operator+(const Rational<L>& lhs, const Rational<R>& rhs)
 {
-	L tempP = rhs.q * lhs.p + lhs.q * rhs.p;
-	L tempQ = lhs.q * rhs.q;
+	typedef typename LargestType<L, R>::type commonType;
+	typedef typename LargerType<commonType>::type BiggerType;
 
-	Reduce<L>(tempP, tempQ);
+	BiggerType tempP = rhs.q * lhs.p + lhs.q * rhs.p;
+	BiggerType tempQ = lhs.q * rhs.q;
 
-	return Rational<L>(tempP, tempQ);
+	Reduce<BiggerType>(tempP, tempQ);
+
+	return Rational<commonType>(tempP, tempQ);
+}
+
+template <typename L, typename R>
+bool operator==(const L& lhs, const Rational<R>& rhs)
+{
+	return (lhs == (rhs.p / rhs.q));
 }
