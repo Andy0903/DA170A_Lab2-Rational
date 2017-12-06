@@ -1,4 +1,4 @@
-//#define VG
+#define VG
 
 template <class Tint>
 class Rational;

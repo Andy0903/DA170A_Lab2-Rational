@@ -25,7 +25,10 @@ struct LargerType<long long>
 };
 
 template <typename T>
-struct TypeSize;
+struct TypeSize
+{
+	static const int byte = 0;
+};
 
 template <>
 struct TypeSize<int>
@@ -90,13 +93,13 @@ public:
 	{
 	}
 
-	friend std::ostream& operator<< (std::ostream &cout, Rational<Tint> R)
+	friend std::ostream& operator<< (std::ostream &cout, const Rational<Tint>& R)
 	{
 		cout << R.p << '/' << R.q;
 		return cout;
 	}
 
-	friend std::istream& operator >> (std::istream& in, Rational<Tint>& r) 
+	friend std::istream& operator>> (std::istream& in, Rational<Tint>& r)
 	{
 		int p, q;
 		in >> p;
@@ -106,32 +109,20 @@ public:
 		return in;
 	}
 
-	bool Rational<Tint>::operator==(const Rational& rhs) const
-	{
-		return ((p / q) == (rhs.p / rhs.q));
-	}
-
-	Rational<Tint> Rational<Tint>::operator=(const Tint& rhs)
+	Rational<Tint> operator=(const Tint& rhs)
 	{
 		p = rhs;
 		q = 1;
 		return (*this);
 	}
 
-	Rational<Tint> Rational<Tint>::operator+=(const Tint& rhs)
+	Rational<Tint> operator+=(const Tint& rhs)
 	{
 		p += rhs * q;
 		return (*this);
 	}
 
-	Rational<Tint> Rational<Tint>::operator+(const Tint& rhs)
-	{
-		Rational<Tint> copy(*this);
-		copy.p += rhs * copy.q;
-		return copy;
-	}
-
-	Rational<Tint> operator-()
+	Rational<Tint> operator-() const
 	{
 		Tint tempP = -p;
 		Tint tempQ = q;
@@ -151,7 +142,7 @@ public:
 		return copy;
 	}
 
-	explicit operator int()
+	explicit operator int() const
 	{
 		return (p/q);
 	}
@@ -163,8 +154,11 @@ Rational<typename LargestType<L,R>::type> operator+(const Rational<L>& lhs, cons
 	typedef typename LargestType<L, R>::type commonType;
 	typedef typename LargerType<commonType>::type BiggerType;
 
-	BiggerType tempP = rhs.q * lhs.p + lhs.q * rhs.p;
-	BiggerType tempQ = lhs.q * rhs.q;
+	Rational<BiggerType> a = lhs;
+	Rational<BiggerType> b = rhs;
+
+	BiggerType tempP = b.q * a.p + a.q * b.p;
+	BiggerType tempQ = a.q * b.q;
 
 	Reduce<BiggerType>(tempP, tempQ);
 
@@ -172,7 +166,53 @@ Rational<typename LargestType<L,R>::type> operator+(const Rational<L>& lhs, cons
 }
 
 template <typename L, typename R>
+Rational<typename LargestType<L, R>::type> operator+(const Rational<L>& lhs, const R& rhs)
+{
+	typedef typename LargestType<L, R>::type commonType;
+	typedef typename LargerType<commonType>::type BiggerType;
+
+	Rational<BiggerType> a = lhs;
+	BiggerType b = rhs;
+
+	BiggerType tempP = a.p + a.q * b;
+	BiggerType tempQ = a.q;
+
+	Reduce<BiggerType>(tempP, tempQ);
+
+	return Rational<commonType>(tempP, tempQ);
+}
+
+template <typename L, typename R>
+Rational<typename LargestType<L, R>::type> operator+(const L& lhs, const Rational<R>& rhs)
+{
+	typedef typename LargestType<L, R>::type commonType;
+	typedef typename LargerType<commonType>::type BiggerType;
+
+	BiggerType a = lhs;
+	Rational<BiggerType> b = rhs;
+
+	BiggerType tempP = b.p + b.q * a;
+	BiggerType tempQ = b.q;
+
+	Reduce<BiggerType>(tempP, tempQ);
+
+	return Rational<commonType>(tempP, tempQ);
+}
+
+template <typename L, typename R>
+bool operator==(const Rational<L>& lhs, const Rational<R>& rhs)
+{
+	return ((lhs.p / static_cast<double>(lhs.q)) == (rhs.p / static_cast<double>(rhs.q)));
+}
+
+template <typename L, typename R>
+bool operator==(const Rational<L>& lhs, const R& rhs)
+{
+	return (rhs == (lhs.p / static_cast<double>(lhs.q)));
+}
+
+template <typename L, typename R>
 bool operator==(const L& lhs, const Rational<R>& rhs)
 {
-	return (lhs == (rhs.p / rhs.q));
+	return (lhs == (rhs.p / static_cast<double>(rhs.q)));
 }
